@@ -92,14 +92,16 @@ def authorized():
         )
 
         if "error" in result:
-            logging.warning("Invalid login attempt")
+            app.logger.warning("Invalid login attempt")
+
             return render_template("auth_error.html", result=result)
         session["user"] = result.get("id_token_claims")
         # Note: In a real app, we'd use the 'name' property from session["user"] below
         # Here, we'll use the admin username for anyone who is authenticated by MS
         user = User.query.filter_by(username="admin").first()
         login_user(user)
-        logging.info("admin logged in successfully")
+        app.logger.info("admin logged in successfully")
+
 
         _save_cache(cache)
     return redirect(url_for('home'))
