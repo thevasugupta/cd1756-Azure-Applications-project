@@ -15,8 +15,8 @@ app.config.from_object(Config)
 # TODO: Add any logging levels and handlers with app.logger
 import logging
 
-if not app.debug:
-    app.logger.setLevel(logging.INFO)
+app.logger.setLevel(logging.INFO)
+
 
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
