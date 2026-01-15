@@ -85,15 +85,22 @@ def authorized():
         return render_template("auth_error.html", result=request.args)
     if request.args.get('code'):
         cache = _load_cache()
-        # TODO: Acquire a token from a built msal app, along with the appropriate redirect URI
-        result = None
+        result = _build_msal_app(cache=cache).acquire_token_by_authorization_code(
+        request.args['code'],
+        scopes=Config.SCOPE,
+        redirect_uri=url_for("authorized", _external=True),
+        )
+
         if "error" in result:
+            logging.warning("Invalid login attempt")
             return render_template("auth_error.html", result=result)
         session["user"] = result.get("id_token_claims")
         # Note: In a real app, we'd use the 'name' property from session["user"] below
         # Here, we'll use the admin username for anyone who is authenticated by MS
         user = User.query.filter_by(username="admin").first()
         login_user(user)
+        logging.info("admin logged in successfully")
+
         _save_cache(cache)
     return redirect(url_for('home'))
 
@@ -124,5 +131,10 @@ def _build_msal_app(cache=None, authority=None):
     return None
 
 def _build_auth_url(authority=None, scopes=None, state=None):
-    # TODO: Return the full Auth Request URL with appropriate Redirect URI
-    return None
+    
+    return _build_msal_app(authority=authority).get_authorization_request_url(
+        scopes or [],
+        state=state or str(uuid.uuid4()),
+        redirect_uri=url_for("authorized", _external=True),
+    )
+
